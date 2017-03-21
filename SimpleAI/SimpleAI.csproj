@@ -4,10 +4,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9BD87C6C-0E41-47E2-AA67-A5F571161D35}</ProjectGuid>
+    <ProjectGuid>{DD9AD0A2-383D-4DBE-B713-A18D3D008A7A}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>AITest</RootNamespace>
-    <AssemblyName>AITest</AssemblyName>
+    <RootNamespace>SimpleAI</RootNamespace>
+    <AssemblyName>SimpleAI</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -42,12 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Classes\INeuralLayer.cs" />
-    <Compile Include="Classes\INeuralNet.cs" />
-    <Compile Include="Classes\Neuron.cs" />
-    <Compile Include="Interfaces\INeuralNet.cs" />
-    <Compile Include="Interfaces\INeuralLayer.cs" />
-    <Compile Include="Interfaces\INeuron.cs" />
+    <Compile Include="DeepThink.cs" />
+    <Compile Include="Interfaces\INetwork.cs" />
+    <Compile Include="Models\Layer.cs" />
+    <Compile Include="Models\Network.cs" />
+    <Compile Include="Models\Neuron.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

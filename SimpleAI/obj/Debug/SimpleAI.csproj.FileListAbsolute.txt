@@ -1,0 +1,6 @@
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\obj\Debug\SimpleAI.csprojResolveAssemblyReference.cache
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\bin\Debug\SimpleAI.exe.config
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\bin\Debug\SimpleAI.exe
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\bin\Debug\SimpleAI.pdb
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\obj\Debug\SimpleAI.exe
+C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\obj\Debug\SimpleAI.pdb
