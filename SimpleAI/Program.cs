@@ -19,7 +19,7 @@ namespace SimpleAI
             TrainingData.Add(new[] { 1D, 0D }, new[] { 1D });
             TrainingData.Add(new[] { 1D, 1D }, new[] { 0D });
 
-            var Service = new DeepThink(1, 4, 4, 1);
+            var Service = new DeepThink(1, 2, 4, 1);
 
             for (int n=0; n < TrainingSets; n++)
             {
