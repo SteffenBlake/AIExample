@@ -8,204 +8,207 @@ namespace SimpleAI.Models
 {
     class DeepThink
     {
-        private Random rnd;
+        private readonly Random _rnd;
 
-        private Network Network = new Network();
+        private readonly Network _network = new Network();
 
-        public DeepThink(int Seed, params int[] LayerCounts)
+        public DeepThink(int seed, params int[] layerCounts)
         {
-            rnd = new Random(Seed);
+            _rnd = new Random(seed);
 
-            for (int x = 0, xMax = LayerCounts.Count(); x < xMax; x++)
+            for (int x = 0, xMax = layerCounts.Count(); x < xMax; x++)
             {
                 var newLayer = new Layer();
-                for (int y=0, yMax = LayerCounts[x]; y < yMax; y++)
+                for (int y=0, yMax = layerCounts[x]; y < yMax; y++)
                 {
                     newLayer.Neurons.Add(new Neuron());
                 }
-                Network.Layers.Add(newLayer);
+                _network.Layers.Add(newLayer);
             }
 
-            Bind(Network);
+            Bind(_network);
         }
 
-        public void Train(double[] Inputs, double[] ExpectedOutputs)
+        public void Train(double[] inputs, double[] expectedOutputs)
         {
-            var OutputLayer = Network.Layers.Last();
+            var outputLayer = _network.Layers.Last();
 
-            if (ExpectedOutputs.Count() > OutputLayer.Neurons.Count())
+            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
             {
                 throw new Exception("Training Outputs exceed number of Neurons in Output Layer.");
             }
-            else if (ExpectedOutputs.Count() > OutputLayer.Neurons.Count())
+
+            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
             {
                 throw new Exception("Neurons in Output Layer exceed Training Outputs.");
             }
 
-            for (int n = 0, MaxVal = ExpectedOutputs.Count(); n < MaxVal; n++)
+            for (int n = 0, maxVal = expectedOutputs.Count(); n < maxVal; n++)
             {
-                OutputLayer.Neurons[n].ExpectedOut = ExpectedOutputs[n];
+                outputLayer.Neurons[n].ExpectedOut = expectedOutputs[n];
             }
 
-            Run(Inputs);
+            Run(inputs);
         }
 
-        public double[] Run(double[] Inputs)
+        public double[] Run(double[] inputs)
         {
-            var InputLayer = Network.Layers.First();
-            var OutputLayer = Network.Layers.Last();
-            if (Inputs.Count() > InputLayer.Neurons.Count())
+            var inputLayer = _network.Layers.First();
+            var outputLayer = _network.Layers.Last();
+            if (inputs.Count() > inputLayer.Neurons.Count())
             {
                 throw new Exception("Training Inputs exceed number of Neurons in Input Layer.");
             }
-            else if (Inputs.Count() > InputLayer.Neurons.Count())
+
+            if (inputs.Count() > inputLayer.Neurons.Count())
             {
                 throw new Exception("Neurons in Input Layer exceed Training Inputs.");
             }
 
-            for (int n = 0, MaxVal = Inputs.Count(); n < MaxVal; n++)
+            for (int n = 0, maxVal = inputs.Count(); n < maxVal; n++)
             {
-                InputLayer.Neurons[n].Input = Inputs[n];
+                inputLayer.Neurons[n].Input = inputs[n];
             }
 
-            PropogateForward(Network);
-            PropogateBackward(Network);
-            var outpouts = OutputLayer.Neurons.Select(n => n.Value).ToArray();
-            Reset(Network);
+            PropagateForward(_network);
+            var outpouts = outputLayer.Neurons.Select(n => n.Input ?? 0D).ToArray();
+            PropagateBackward(_network);
+            Reset(_network);
 
             return outpouts;
         }
 
-        public void Bind(Network Network)
+        public void Bind(Network network)
         {
-            for (int n = 1, Max = Network.Layers.Count; n < Max; n++)
+            for (int n = 1, max = network.Layers.Count; n < max; n++)
             {
-                var ParentLayer = Network.Layers[n - 1];
-                var ChildLayer = Network.Layers[n];
-                Bind(ParentLayer, ChildLayer);
+                var parentLayer = network.Layers[n - 1];
+                var childLayer = network.Layers[n];
+                Bind(parentLayer, childLayer);
             }
         }
 
-        private void Bind(ILayer ParentLayer, ILayer ChildLayer)
+        private void Bind(ILayer parentLayer, ILayer childLayer)
         {
-            foreach(INeuron ParentNeuron in ParentLayer.Neurons)
+            foreach(var parentNeuron in parentLayer.Neurons)
             {
-                foreach (INeuron ChildNeuron in ChildLayer.Neurons)
+                foreach (var childNeuron in childLayer.Neurons)
                 {
-                    Bind(ParentNeuron, ChildNeuron);
+                    Bind(parentNeuron, childNeuron);
                 }
             }
         }
 
-        private void Bind(INeuron Parent, INeuron Child)
+        private void Bind(INeuron parent, INeuron child)
         {
-            Parent.Children.Add(Child);
-            Child.Parents.Add(Parent, rnd.NextDouble());
+            parent.Children.Add(child);
+            child.Parents.Add(parent, _rnd.NextDouble());
         }
 
-        //Propogate Layer by Layer
-        public void PropogateForward(Network Network)
+        //Propagate Layer by Layer
+        public void PropagateForward(Network network)
         {
-            foreach (ILayer Layer in Network.Layers)
+            foreach (var layer in network.Layers)
             {
-                PropogateForward(Layer);
+                PropagateForward(layer);
             }
         }
 
-        private void PropogateForward(ILayer Layer)
+        private void PropagateForward(ILayer layer)
         {
-            foreach (INeuron Neuron in Layer.Neurons)
+            foreach (var neuron in layer.Neurons)
             {
-                PropogateForward(Neuron);
+                PropagateForward(neuron);
             }
         }
 
         /// <summary>
         /// Sets the Value of a Neuron based on its Inputs
         /// </summary>
-        /// <param name="Neuron"></param>
-        private void PropogateForward(INeuron Neuron)
+        /// <param name="neuron"></param>
+        private void PropagateForward(INeuron neuron)
         {
             //Input will not be null if this is a root Neuron
-            if (Neuron.Input.HasValue)
+            if (neuron.Input.HasValue)
             {
                 //First layer Neurons just have a value of their input
-                Neuron.Value = Neuron.Input.Value;
+                neuron.Value = neuron.Input.Value;
             }
             else
             {
                 // This is a Neuron in the second or deeper Layer. 
                 // Neuron's value = sum of its parents values multiplied by weight of respective connection
-                Neuron.Input = Neuron.Parents.Sum(n => n.Key.Value * n.Value);
+                neuron.Input = neuron.Parents.Sum(n => n.Key.Value * n.Value);
 
                 //Sigmoid function to make it a value between 0 and 1
-                Neuron.Value = Sigmoid(Neuron.Input ?? 0);
+                neuron.Value = Sigmoid(neuron.Input ?? 0);
             }
         }
 
-        public void PropogateBackward(Network Network)
+        public void PropagateBackward(Network network)
         {
-            foreach (ILayer Layer in Network.Layers)
+            foreach (var layer in network.Layers.Reverse())
             {
-                PropogateBackward(Layer);
+                PropagateBackward(layer);
             }
         }
 
-        private void PropogateBackward(ILayer Layer)
+        private void PropagateBackward(ILayer layer)
         {
-            foreach (INeuron Neuron in Layer.Neurons)
+            foreach (var neuron in layer.Neurons)
             {
-                PropogateBackward(Neuron);
+                PropagateBackward(neuron);
             }
         }
 
         /// <summary>
         /// Sets the new Weights of a Neuron based on its Error
         /// </summary>
-        /// <param name="Neuron"></param>
-        private void PropogateBackward(INeuron Neuron)
+        /// <param name="neuron"></param>
+        private void PropagateBackward(INeuron neuron)
         {
-            if (Neuron.ExpectedOut.HasValue)
+            if (neuron.ExpectedOut.HasValue)
             {
                 //Delta value of output layer
-                Neuron.ExpectedOut -= Neuron.Value;
+                neuron.ExpectedOut -= neuron.Value;
             }
             else
             {
                 //Sum up Children neuron Errors multiplied by respective Weight linking to them
-                Neuron.ExpectedOut = Neuron.Children.Sum(n => n.Error * n.Parents[Neuron]);
+                neuron.ExpectedOut = neuron.Children.Sum(n => n.Error * n.Parents[neuron]);
             }
             //Derivative of Sigmoid Function
-            Neuron.Error = Neuron.ExpectedOut.Value * (1 - Neuron.Value) * Neuron.Value;
+            neuron.Error = neuron.ExpectedOut.Value * (1 - neuron.Value) * neuron.Value;
 
-            var NewParents = new Dictionary<INeuron, double>();
-            foreach(KeyValuePair<INeuron, double> Weight in Neuron.Parents)
+            var newParents = new Dictionary<INeuron, double>();
+            foreach(KeyValuePair<INeuron, double> Weight in neuron.Parents)
             {
-                var Parent = Weight.Key;
-                NewParents[Parent] = Weight.Value + Weight.Value * Parent.Input.Value;
+                var parent = Weight.Key;
+                newParents[parent] = Weight.Value + Weight.Value * parent.Input.Value;
+            }
+            neuron.Parents = newParents;
+        }
+
+        public void Reset(Network network)
+        {
+            foreach (ILayer layer in network.Layers)
+            {
+                Reset(layer);
             }
         }
 
-        public void Reset(Network Network)
+        private void Reset(ILayer layer)
         {
-            foreach (ILayer Layer in Network.Layers)
+            foreach (var neuron in layer.Neurons)
             {
-                Reset(Layer);
+                Reset(neuron);
             }
         }
 
-        private void Reset(ILayer Layer)
+        private void Reset(INeuron neuron)
         {
-            foreach (INeuron Neuron in Layer.Neurons)
-            {
-                Reset(Neuron);
-            }
-        }
-
-        private void Reset(INeuron Neuron)
-        {
-            Neuron.Input = null;
-            Neuron.ExpectedOut = null;
+            neuron.Input = null;
+            neuron.ExpectedOut = null;
         }
 
         /// <summary>

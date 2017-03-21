@@ -9,7 +9,7 @@ namespace SimpleAI
 {
     class Program
     {
-        static readonly int TrainingSets = 100000;
+        static readonly int TrainingSets = 10000;
         static void Main(string[] args)
         {
             var TrainingData = new Dictionary<double[], double[]>();

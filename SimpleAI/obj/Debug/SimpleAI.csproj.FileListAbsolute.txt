@@ -4,3 +4,9 @@ C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\bin\Debug\SimpleAI.exe
 C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\bin\Debug\SimpleAI.pdb
 C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\obj\Debug\SimpleAI.exe
 C:\Users\steff\AppData\Local\Temporary Projects\SimpleAI\obj\Debug\SimpleAI.pdb
+C:\PleasantGit\AI\AIExample\SimpleAI\bin\Debug\SimpleAI.exe.config
+C:\PleasantGit\AI\AIExample\SimpleAI\obj\Debug\SimpleAI.pdb
+C:\PleasantGit\AI\AIExample\SimpleAI\bin\Debug\SimpleAI.exe
+C:\PleasantGit\AI\AIExample\SimpleAI\bin\Debug\SimpleAI.pdb
+C:\PleasantGit\AI\AIExample\SimpleAI\obj\Debug\SimpleAI.csprojResolveAssemblyReference.cache
+C:\PleasantGit\AI\AIExample\SimpleAI\obj\Debug\SimpleAI.exe
