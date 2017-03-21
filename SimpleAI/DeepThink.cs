@@ -25,6 +25,8 @@ namespace SimpleAI.Models
                 }
                 Network.Layers.Add(newLayer);
             }
+
+            Bind(Network);
         }
 
         public void Train(double[] Inputs, double[] ExpectedOutputs)
