@@ -31,11 +31,12 @@ namespace SimpleAI
                 }
             }
             
-            foreach (var key in TrainingData.Keys)
+            foreach (KeyValuePair<double[], double[]> pair in TrainingData)
             {
-                Console.WriteLine("Input: {0}", string.Join("-", key));
-                var output = Service.Run(key);
-                Console.WriteLine(string.Join("-", output));
+                Console.WriteLine("Input: {0}", string.Join("-", pair.Key));
+                var output = Service.Run(pair.Key);
+                Console.WriteLine("Result: {0}", string.Join("-", output));
+                Console.WriteLine("Expected: {0}\n", string.Join("-", pair.Value));
             }
 
             Console.WriteLine("Press any key to continue...");
