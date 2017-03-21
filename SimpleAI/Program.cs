@@ -9,7 +9,7 @@ namespace SimpleAI
 {
     class Program
     {
-        static readonly int TrainingSets = 1000;
+        static readonly int TrainingSets = 100000;
         static void Main(string[] args)
         {
             var TrainingData = new Dictionary<double[], double[]>();
@@ -23,12 +23,12 @@ namespace SimpleAI
 
             for (int n=0; n < TrainingSets; n++)
             {
+                Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Commencing Training! {0}/{1}", n, TrainingSets);
                 foreach(KeyValuePair<double[], double[]> Trainer in TrainingData)
                 {
                     Service.Train(Trainer.Key, Trainer.Value);
                 }
-                Console.Clear();
             }
             
             foreach (var key in TrainingData.Keys)
