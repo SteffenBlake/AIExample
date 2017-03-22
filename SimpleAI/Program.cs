@@ -9,38 +9,60 @@ namespace SimpleAI
 {
     class Program
     {
-        static readonly int TrainingSets = 10000;
+        static int ENTERKEY = 13;
+
         static void Main(string[] args)
         {
-            var TrainingData = new Dictionary<double[], double[]>();
+            var Service = new DeepThink(1, 1, 4, 4);
+            var x = 10;
+            var y = 10;
 
-            TrainingData.Add(new[] { 0D, 0D }, new[] { 0D });
-            TrainingData.Add(new[] { 0D, 1D }, new[] { 1D });
-            TrainingData.Add(new[] { 1D, 0D }, new[] { 1D });
-            TrainingData.Add(new[] { 1D, 1D }, new[] { 0D });
 
-            var Service = new DeepThink(1, 2, 4, 1);
-
-            for (int n=0; n < TrainingSets; n++)
+            while (true)
             {
-                Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Commencing Training! {0}/{1}", n, TrainingSets);
-                foreach(KeyValuePair<double[], double[]> Trainer in TrainingData)
+                DrawScreen(0, 0);
+                var keyDown = (int)Console.ReadKey().Key;
+                if (keyDown == ENTERKEY)
                 {
-                    Service.Train(Trainer.Key, Trainer.Value);
+                    Service.Punish();
                 }
-            }
-            
-            foreach (KeyValuePair<double[], double[]> pair in TrainingData)
-            {
-                Console.WriteLine("Input: {0}", string.Join("-", pair.Key));
-                var output = Service.Run(pair.Key);
-                Console.WriteLine("Result: {0}", string.Join("-", output));
-                Console.WriteLine("Expected: {0}\n", string.Join("-", pair.Value));
+                else
+                {
+                    var outputs = Service.Run(new[] {keyDown / 220D }).Select(v => Math.Round(v)).ToArray();
+                    if (outputs[0] != 0) x -= 1;
+                    if (outputs[1] != 0) y -= 1;
+                    if (outputs[2] != 0) x += 1;
+                    if (outputs[3] != 0) y += 1;
+                }
+
             }
 
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
+        }
+
+        //Draws the screen. X must be 1-30, y 1-15
+        static void DrawScreen(int x, int y)
+        {
+            if (x < 1) x = 1;
+            if (x > 30) x = 30;
+            if (y < 1) y = 1;
+            if (y > 15) y = 15;
+            Console.SetCursorPosition(0, 0);
+            Console.WriteLine("Press any key except Enter to encourage the thing to move.");
+            Console.WriteLine("Press Enter to punish if it moved the wrong way!");
+
+            Console.SetCursorPosition(0, 3);
+            Console.WriteLine("  ╔╗                              ╔╗");
+            Console.WriteLine("  ╚╬══════════════════════════════╬╝");
+            for (int n = 1; n <= 15; n++)
+            {
+                Console.WriteLine("   ║                              ║ ");
+            }
+            Console.WriteLine("  ╔╬══════════════════════════════╬╗");
+            Console.WriteLine("  ╚╝                              ╚╝");
+
+            Console.SetCursorPosition(x + 3, y + 4);
+            Console.Write("O");
+            Console.SetCursorPosition(0, 21);
         }
     }
 }

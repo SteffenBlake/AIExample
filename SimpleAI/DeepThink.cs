@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleAI.Models
 {
@@ -12,14 +10,33 @@ namespace SimpleAI.Models
 
         private readonly Network _network = new Network();
 
+        private double _lastError;
+
+        /// <summary>
+        /// Gets the Last Error the system had during a training session.
+        /// </summary>
+        public double LastError
+        {
+            get
+            {
+                return _lastError;
+            }
+        }
+
+        /// <summary>
+        /// Instantiates a DeepThink system with a starting seed and neurons in layers
+        /// </summary>
+        /// <param name="seed">The Starting seed for the system for debugging</param>
+        /// <param name="layerCounts">The number of neurons in each layer</param>
         public DeepThink(int seed, params int[] layerCounts)
         {
             _rnd = new Random(seed);
+            _lastError = 0D;
 
             for (int x = 0, xMax = layerCounts.Count(); x < xMax; x++)
             {
                 var newLayer = new Layer();
-                for (int y=0, yMax = layerCounts[x]; y < yMax; y++)
+                for (int y = 0, yMax = layerCounts[x]; y < yMax; y++)
                 {
                     newLayer.Neurons.Add(new Neuron());
                 }
@@ -29,32 +46,60 @@ namespace SimpleAI.Models
             Bind(_network);
         }
 
+        /// <summary>
+        /// Trains the network to learn patterns
+        /// </summary>
+        /// <param name="inputs">Inputs to train with.</param>
+        /// <param name="expectedOutputs">Expected values to recieve based on input. Inputting none will grant an error of 0%</param>
         public void Train(double[] inputs, double[] expectedOutputs)
         {
-            var outputLayer = _network.Layers.Last();
+            PropogateForward(inputs, false);
 
-            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
-            {
-                throw new Exception("Training Outputs exceed number of Neurons in Output Layer.");
-            }
+            var lastErrors = PropagateBackward(_network, expectedOutputs);
+            _lastError = Math.Sqrt(lastErrors.Sum(v => v*v));
 
-            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
-            {
-                throw new Exception("Neurons in Output Layer exceed Training Outputs.");
-            }
-
-            for (int n = 0, maxVal = expectedOutputs.Count(); n < maxVal; n++)
-            {
-                outputLayer.Neurons[n].ExpectedOut = expectedOutputs[n];
-            }
-
-            Run(inputs);
+            Reset(_network);
         }
 
-        public double[] Run(double[] inputs)
+        /// <summary>
+        /// Utulizes the neural network to perform logic on the inputs.
+        /// </summary>
+        /// <param name="inputs">Values to pass into the network</param>
+        /// <param name="reset">Whether or not to reset the network after use. Best left on True  if not training.</param>
+        /// <returns>The logical output based on training</returns>
+        public double[] Run(double[] inputs, bool reset = true)
+        {
+            return PropogateForward(inputs, reset);
+        }
+
+        /// <summary>
+        /// Punishes the Network, teaching it to bias away from its last result.
+        /// </summary>
+        public void Punish()
+        {
+            var length = _network.Layers.Last().Neurons.Count;
+            double[] zeros = new double[length];
+            for (int n=0; n<length; n++)
+            {
+                zeros[n] = 0D;
+            }
+            PropagateBackward(_network, zeros);
+            Reset(_network);
+        }
+
+        /// <summary>
+        /// Rewards the network for its results, further cementing it.
+        /// </summary>
+        public void Reward()
+        {
+            PropagateBackward(_network);
+            Reset(_network);
+        }
+
+        private double[] PropogateForward(double[] inputs, bool reset = true)
         {
             var inputLayer = _network.Layers.First();
-            var outputLayer = _network.Layers.Last();
+
             if (inputs.Count() > inputLayer.Neurons.Count())
             {
                 throw new Exception("Training Inputs exceed number of Neurons in Input Layer.");
@@ -70,15 +115,19 @@ namespace SimpleAI.Models
                 inputLayer.Neurons[n].Input = inputs[n];
             }
 
-            PropagateForward(_network);
-            var outpouts = outputLayer.Neurons.Select(n => n.Input ?? 0D).ToArray();
-            PropagateBackward(_network);
-            Reset(_network);
+            foreach (var layer in _network.Layers)
+            {
+                PropagateForward(layer);
+            }
 
-            return outpouts;
+            var output = _network.Layers.Last().Neurons.Select(n => n.Value).ToArray();
+
+            if (reset) Reset(_network);
+
+            return output;
         }
 
-        public void Bind(Network network)
+        private void Bind(Network network)
         {
             for (int n = 1, max = network.Layers.Count; n < max; n++)
             {
@@ -90,7 +139,7 @@ namespace SimpleAI.Models
 
         private void Bind(ILayer parentLayer, ILayer childLayer)
         {
-            foreach(var parentNeuron in parentLayer.Neurons)
+            foreach (var parentNeuron in parentLayer.Neurons)
             {
                 foreach (var childNeuron in childLayer.Neurons)
                 {
@@ -103,15 +152,6 @@ namespace SimpleAI.Models
         {
             parent.Children.Add(child);
             child.Parents.Add(parent, _rnd.NextDouble());
-        }
-
-        //Propagate Layer by Layer
-        public void PropagateForward(Network network)
-        {
-            foreach (var layer in network.Layers)
-            {
-                PropagateForward(layer);
-            }
         }
 
         private void PropagateForward(ILayer layer)
@@ -131,6 +171,11 @@ namespace SimpleAI.Models
             //Input will not be null if this is a root Neuron
             if (neuron.Input.HasValue)
             {
+                if (neuron.Input.Value == double.NaN)
+                {
+                    neuron.Input = double.MaxValue;
+                }
+
                 //First layer Neurons just have a value of their input
                 neuron.Value = neuron.Input.Value;
             }
@@ -141,16 +186,35 @@ namespace SimpleAI.Models
                 neuron.Input = neuron.Parents.Sum(n => n.Key.Value * n.Value);
 
                 //Sigmoid function to make it a value between 0 and 1
-                neuron.Value = Sigmoid(neuron.Input ?? 0);
+                neuron.Value = Sigmoid(neuron.Input.Value);
             }
         }
 
-        public void PropagateBackward(Network network)
+        public double[] PropagateBackward(Network network, params double[] expectedOutputs)
         {
+            var outputLayer = _network.Layers.Last();
+
+            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
+            {
+                throw new Exception("Training Outputs exceed number of Neurons in Output Layer.");
+            }
+
+            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
+            {
+                throw new Exception("Neurons in Output Layer exceed Training Outputs.");
+            }
+
+            for (int n = 0, maxVal = expectedOutputs.Count(); n < maxVal; n++)
+            {
+                outputLayer.Neurons[n].ExpectedOut = expectedOutputs[n];
+            }
+
             foreach (var layer in network.Layers.Reverse())
             {
                 PropagateBackward(layer);
             }
+
+            return outputLayer.Neurons.Select(n => n.Error).ToArray();
         }
 
         private void PropagateBackward(ILayer layer)
@@ -181,15 +245,19 @@ namespace SimpleAI.Models
             neuron.Error = neuron.ExpectedOut.Value * (1 - neuron.Value) * neuron.Value;
 
             var newParents = new Dictionary<INeuron, double>();
-            foreach(KeyValuePair<INeuron, double> Weight in neuron.Parents)
+            foreach (KeyValuePair<INeuron, double> Weight in neuron.Parents)
             {
                 var parent = Weight.Key;
-                newParents[parent] = Weight.Value + Weight.Value * parent.Input.Value;
+                newParents[parent] = Weight.Value + neuron.Error * parent.Value;
             }
             neuron.Parents = newParents;
         }
 
-        public void Reset(Network network)
+        public void Reset()
+        {
+            Reset(_network);
+        }
+        private void Reset(Network network)
         {
             foreach (ILayer layer in network.Layers)
             {
@@ -218,7 +286,20 @@ namespace SimpleAI.Models
         /// <returns></returns>
         private double Sigmoid(double input)
         {
-            return 1 / (1 + Math.Exp(-input));
+            try
+            {
+                var divisor = 1 + Math.Exp(-1 * input);
+                if (divisor == 0) return 0D;
+                var output = 1 / (divisor);
+                return output;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+                return 0D;
+            }
         }
     }
 }
