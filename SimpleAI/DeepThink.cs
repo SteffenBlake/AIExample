@@ -75,24 +75,22 @@ namespace SimpleAI.Models
         /// <summary>
         /// Punishes the Network, teaching it to bias away from its last result.
         /// </summary>
-        public void Punish()
+        public void Punish(double amount = 5D)
         {
-            var length = _network.Layers.Last().Neurons.Count;
-            double[] zeros = new double[length];
-            for (int n=0; n<length; n++)
-            {
-                zeros[n] = 0D;
-            }
-            PropagateBackward(_network, zeros);
+            var expectedOuts = _network.Layers.Last().Neurons.Select(n => 1 - Math.Round(n.Value)).ToArray();
+
+            PropagateBackward(_network, expectedOuts);
             Reset(_network);
         }
 
         /// <summary>
         /// Rewards the network for its results, further cementing it.
         /// </summary>
-        public void Reward()
+        public void Reward(double amount = 5D)
         {
-            PropagateBackward(_network);
+            var expectedOuts = _network.Layers.Last().Neurons.Select(n => Math.Round(n.Value)).ToArray();
+
+            PropagateBackward(_network, expectedOuts);
             Reset(_network);
         }
 
@@ -171,11 +169,6 @@ namespace SimpleAI.Models
             //Input will not be null if this is a root Neuron
             if (neuron.Input.HasValue)
             {
-                if (neuron.Input.Value == double.NaN)
-                {
-                    neuron.Input = double.MaxValue;
-                }
-
                 //First layer Neurons just have a value of their input
                 neuron.Value = neuron.Input.Value;
             }
@@ -277,6 +270,7 @@ namespace SimpleAI.Models
         {
             neuron.Input = null;
             neuron.ExpectedOut = null;
+            neuron.Value = 0D;
         }
 
         /// <summary>

@@ -9,13 +9,16 @@ namespace SimpleAI
 {
     class Program
     {
-        static int ENTERKEY = 13;
+        static int ENTER = 13;
+        static int PLUS = 187;
+        static int MINUS = 189;
+        static double Min_Thresh = 0.5D;
 
         private static double _Errorthresh = 0.01;
 
         static void Main(string[] args)
         {
-            LogicGateAI();
+            MoverAI();
 
             Console.WriteLine("Press any key to end the program...");
             Console.ReadKey();
@@ -23,25 +26,62 @@ namespace SimpleAI
 
         static void MoverAI()
         {
-            var Service = new DeepThink(1, 1, 4, 4);
-            var x = 10;
-            var y = 10;
+            var Service = new DeepThink(220, 221, 4, 4);
+            var x = 15;
+            var y = 7;
+            DrawScreen(x, y, "");
 
+            var lastOutputs = new double[] { };
+
+            bool reinforcing = false;
             while (true)
             {
-                DrawScreen(0, 0);
-                var keyDown = (int) Console.ReadKey().Key;
-                if (keyDown == ENTERKEY)
+                var keyDown = (int)Console.ReadKey(true).Key;
+                if (keyDown == PLUS)
+                {
+                    Service.Reward();
+                    DrawScreen(x, y, "Rewarded");
+                }
+                else if (keyDown == MINUS)
                 {
                     Service.Punish();
+                    DrawScreen(x, y, "Punished");
+                }
+                else if (keyDown == ENTER)
+                {
+                    reinforcing = true;
+                    DrawScreen(x, y, "Training... Press a key to reinforce it.");
                 }
                 else
                 {
-                    var outputs = Service.Run(new[] {keyDown / 220D}).Select(v => Math.Round(v)).ToArray();
-                    if (outputs[0] != 0) x -= 1;
-                    if (outputs[1] != 0) y -= 1;
-                    if (outputs[2] != 0) x += 1;
-                    if (outputs[3] != 0) y += 1;
+                    Service.Reset();
+                    var inputs = new double[220];
+                    for (int n = 0; n < 220; n++) { inputs[n] = 0D; }
+                    inputs[keyDown] = 1D;
+
+                    if (reinforcing)
+                    {
+                        Service.Train(inputs, lastOutputs);
+                        reinforcing = false;
+                        DrawScreen(x, y, "Trained");
+                    }
+                    else
+                    {
+                        lastOutputs = Service.Run(inputs,false).Select(v => Math.Round(v)).ToArray();
+
+                        if (lastOutputs[0] == 1) x -= 1;
+                        if (lastOutputs[1] == 1) y -= 1;
+                        if (lastOutputs[2] == 1) x += 1;
+                        if (lastOutputs[3] == 1) y += 1;
+
+                        if (x < 1) x = 30;
+                        if (x > 30) x = 1;
+                        if (y < 1) y = 15;
+                        if (y > 15) y = 1;
+
+                        Console.Clear();
+                        DrawScreen(x, y, "");
+                    }
                 }
             }
         }
@@ -84,14 +124,11 @@ namespace SimpleAI
         }
 
         //Draws the screen. X must be 1-30, y 1-15
-        static void DrawScreen(int x, int y)
+        static void DrawScreen(int x, int y, string message)
         {
-            if (x < 1) x = 1;
-            if (x > 30) x = 30;
-            if (y < 1) y = 1;
-            if (y > 15) y = 15;
+            Console.Clear();
             Console.SetCursorPosition(0, 0);
-            Console.WriteLine("Press any key except Enter to encourage the thing to move.");
+            Console.WriteLine("Press any key except Enter/-/+ to Train the thing to move. Press + to reward, - to Punish");
             Console.WriteLine("Press Enter to punish if it moved the wrong way!");
 
             Console.SetCursorPosition(0, 3);
@@ -106,7 +143,8 @@ namespace SimpleAI
 
             Console.SetCursorPosition(x + 3, y + 4);
             Console.Write("O");
-            Console.SetCursorPosition(0, 21);
+            Console.SetCursorPosition(4, 22);
+            Console.Write(message);
         }
     }
 }
