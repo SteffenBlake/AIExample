@@ -29,7 +29,7 @@ namespace SimpleAI
                 wordList.Add(nextLine.Trim().ToLower());
             }
 
-            var wordArray = wordList.Select(s => s.Select(c => (Convert.ToInt32(c) - A)/26D).ToArray()).ToArray();
+            var wordArray = wordList.Select(s => s.Select(ToSimple).ToArray()).ToArray();
 
             var maxLength = wordList.Select(a => a.Length).Max();
             
@@ -37,7 +37,7 @@ namespace SimpleAI
 
             var expectedOut = new [] {1D};
 
-            for (int n=0, max = wordArray.Length; n < max; n++)
+            for (int n=0, max = wordArray.Length; n < max && n < 1000; n++)
             {
                 Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Iterations: {0}/{1}", n, max);
@@ -64,14 +64,35 @@ namespace SimpleAI
                     {
                         badArray[y] = consanents[rnd.Next(0, 21)];
                     }
+                    var output = service.Run(badArray);
                     service.Train(badArray, expectedOut);
                     errorList.Add(service.LastError);
                 }
                 error = Math.Sqrt(errorList.Sum(e => e * e));
             }
 
-            Console.WriteLine("Ready! Give me words to try and guess!");
+            Console.WriteLine("Ready! Give me words to try and guess! Type 'Exit' to end");
+            while (true)
+            {
+                var input = Console.ReadLine().Trim().ToLower();
+                if (input == "exit") break;
 
+                if (input.All(char.IsLetter))
+                {
+                    var charArray = input.Select(ToSimple).ToArray();
+                    var output = service.Run(charArray).First();
+                    Console.WriteLine("Confidence: {0:P}", output);
+                }
+                else
+                {
+                    Console.WriteLine("Now I know that's definitely not a word! Try again!");
+                }
+            }
+        }
+
+        private static double ToSimple(char c)
+        {
+            return Convert.ToInt32(c) - A / 26D;
         }
     }
 }
