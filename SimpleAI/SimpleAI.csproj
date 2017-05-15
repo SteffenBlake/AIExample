@@ -43,11 +43,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DeepThink.cs" />
-    <Compile Include="Interfaces\INetwork.cs" />
     <Compile Include="LogicGate.cs" />
-    <Compile Include="Models\Layer.cs" />
-    <Compile Include="Models\Network.cs" />
-    <Compile Include="Models\Neuron.cs" />
+    <Compile Include="Nerve Models\Link.cs" />
+    <Compile Include="Network Models\Layer.cs" />
+    <Compile Include="Network Models\Network.cs" />
+    <Compile Include="Nerve Models\Nerve.cs" />
+    <Compile Include="Network Models\Neuron.cs" />
     <Compile Include="Mover.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
