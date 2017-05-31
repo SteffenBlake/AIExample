@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace SimpleAI
+namespace SimpleAI.Network_Models
 {
     public interface INeuron
     {
@@ -23,95 +19,27 @@ namespace SimpleAI
 
     public class Neuron : INeuron
     {
+        public double? Input { get; set; }
 
-        private double? _Input;
+        public IDictionary<INeuron, double> Parents { get; set; }
 
-        public double? Input
-        {
-            get
-            {
-                return _Input;
-            }
-            set
-            {
-                _Input = value;
-            }
-        }
+        public List<INeuron> Children { get; set; }
 
-        private IDictionary<INeuron, double> _Parents;
-        public IDictionary<INeuron, double> Parents
-        {
-            get
-            {
-                return _Parents;
-            }
-            set
-            {
-                _Parents = value;
-            }
-        }
+        public double Value { get; set; }
 
-        private List<INeuron> _Children;
-        public List<INeuron> Children
-        {
-            get
-            {
-                return _Children;
-            }
-            set
-            {
-                _Children = value;
-            }
-        }
+        public double? ExpectedOut { get; set; }
 
-        private double _Value;
-        public double Value
-        {
-            get
-            {
-                return _Value;
-            }
-            set
-            {
-                _Value = value;
-            }
-        }
-
-        private double? _ExpectedOut;
-        public double? ExpectedOut
-        {
-            get
-            {
-                return _ExpectedOut;
-            }
-            set
-            {
-                _ExpectedOut = value;
-            }
-        }
-
-        private double _Error;
-        public double Error
-        {
-            get
-            {
-                return _Error;
-            }
-            set
-            {
-                _Error = value;
-            }
-        }
+        public double Error { get; set; }
 
 
         public Neuron()
         {
-            _Parents = new Dictionary<INeuron, double>();
-            _Children = new List<INeuron>();
-            _Value = 0;
-            _Input = null;
-            _ExpectedOut = null;
-            _Error = 0;
+            Parents = new Dictionary<INeuron, double>();
+            Children = new List<INeuron>();
+            Value = 0;
+            Input = null;
+            ExpectedOut = null;
+            Error = 0;
         }
 
     }

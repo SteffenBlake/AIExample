@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SimpleAI.Models;
 
 namespace SimpleAI
 {
@@ -35,40 +32,29 @@ namespace SimpleAI
             
             var service = new DeepThink(1, maxLength, maxLength+1, 1);
 
-            var expectedOut = new [] {1D};
+            //  B      C      D      F      G      H      J       K       L      M        N       P      Q        R       S      T       V       W        X        Y     Z 
+            var consanents = new List<double>() { 2 / 26D, 3 / 26D, 4 / 26D, 6 / 26D, 7 / 26D, 8 / 26D, 10 / 26D, 11 / 26D, 12 / 26D, 13 / 26D, 14 / 26D, 16 / 26D, 17 / 26D, 18 / 26D, 19 / 26D, 20 / 26D, 21 / 26D, 22 / 26D, 23 / 26D, 24 / 26D, 1D }.ToArray();
+            var rnd = new Random();
 
-            for (int n=0, max = wordArray.Length; n < max && n < 1000; n++)
+            for (int n=0, max = wordArray.Length; n < max; n++)
             {
                 Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Iterations: {0}/{1}", n, max);
-                service.Train(wordArray[n], expectedOut);
-            }
+                var word = wordArray[n];
+                service.Train(word, new[] { 1D });
+                var error1 = service.LastError;
 
-            var error = 1D;
-                                               //  B      C      D      F      G      H      J       K       L      M        N       P      Q        R       S      T       V       W        X        Y     Z 
-            var consanents = new List<double>() {2/26D, 3/26D, 4/26D, 6/26D, 7/26D, 8/26D, 10/26D, 11/26D, 12/26D, 13/26D, 14/26D, 16/26D, 17/26D, 18/26D, 19/26D, 20/26D, 21/26D, 22/26D, 23/26D, 24/26D, 1D}.ToArray();
-
-            var rnd = new Random();
-
-            expectedOut = new[] { 0D };
-
-            for (var n = 0; error >= ErrorThresh; n++)
-            {
-                Console.SetCursorPosition(0, 1);
-                Console.WriteLine("Iterations: {0} - Error Thresh: {1} - Current Error: {2}", n, ErrorThresh, error );
-                var errorList = new List<double>();
-                for (var x = 1; x <= maxLength; x++)
+                var length = word.Length;
+                var badArray = new double[length];
+                for (var y = 0; y < length; y++)
                 {
-                    var badArray = new double[x];
-                    for (var y = 0; y < x; y++)
-                    {
-                        badArray[y] = consanents[rnd.Next(0, 21)];
-                    }
-                    var output = service.Run(badArray);
-                    service.Train(badArray, expectedOut);
-                    errorList.Add(service.LastError);
+                    badArray[y] = consanents[rnd.Next(0, 21)];
                 }
-                error = Math.Sqrt(errorList.Sum(e => e * e));
+                var output = service.Run(badArray);
+                service.Train(badArray, new[] { 0D });
+                var error2 = service.LastError;
+                var totalError = Math.Sqrt(error1 * error1 + error2 * error2);
+                Console.WriteLine("Last Error: {0:P}", totalError);
             }
 
             Console.WriteLine("Ready! Give me words to try and guess! Type 'Exit' to end");

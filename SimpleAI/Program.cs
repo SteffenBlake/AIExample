@@ -2,9 +2,9 @@
 
 namespace SimpleAI
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             Reader.Run();
             Console.WriteLine("Press any key to end the program...");

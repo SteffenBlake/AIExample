@@ -1,11 +1,6 @@
-﻿using SimpleAI.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace SimpleAI.Models
+namespace SimpleAI.Network_Models
 {
     public interface ILayer
     {
@@ -14,21 +9,11 @@ namespace SimpleAI.Models
 
     public class Layer : ILayer
     {
-        private IList<INeuron> _Neurons;
-        public IList<INeuron> Neurons {
-            get
-            {
-                return _Neurons;
-            }
-            set
-            {
-                _Neurons = value;
-            }
-        }
+        public IList<INeuron> Neurons { get; set; }
 
         public Layer()
         {
-            _Neurons = new List<INeuron>();
+            Neurons = new List<INeuron>();
         }
     }
 }

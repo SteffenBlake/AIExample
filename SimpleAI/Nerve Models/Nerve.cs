@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using SimpleAI.Models;
+using SimpleAI.Nerve_Models;
 
 namespace SimpleAI.Models
 {

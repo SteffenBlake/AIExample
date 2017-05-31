@@ -1,27 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using SimpleAI.Network_Models;
 
-namespace SimpleAI.Models
+namespace SimpleAI
 {
-    class DeepThink
+    public class DeepThink
     {
         private readonly Random _rnd;
 
         private readonly Network _network = new Network();
 
-        private double _lastError;
-
         /// <summary>
         /// Gets the Last Error the system had during a training session.
         /// </summary>
-        public double LastError
-        {
-            get
-            {
-                return _lastError;
-            }
-        }
+        public double LastError { get; private set; }
 
         /// <summary>
         /// Instantiates a DeepThink system with a starting seed and neurons in layers
@@ -31,9 +24,9 @@ namespace SimpleAI.Models
         public DeepThink(int seed, params int[] layerCounts)
         {
             _rnd = new Random(seed);
-            _lastError = 0D;
+            LastError = 0D;
 
-            for (int x = 0, xMax = layerCounts.Count(); x < xMax; x++)
+            for (int x = 0, xMax = layerCounts.Length; x < xMax; x++)
             {
                 var newLayer = new Layer();
                 for (int y = 0, yMax = layerCounts[x]; y < yMax; y++)
@@ -56,7 +49,7 @@ namespace SimpleAI.Models
             PropogateForward(inputs, false);
 
             var lastErrors = PropagateBackward(_network, expectedOutputs);
-            _lastError = Math.Sqrt(lastErrors.Sum(v => v*v));
+            LastError = Math.Sqrt(lastErrors.Sum(v => v*v));
 
             Reset(_network);
         }
@@ -98,17 +91,17 @@ namespace SimpleAI.Models
         {
             var inputLayer = _network.Layers.First();
 
-            if (inputs.Count() > inputLayer.Neurons.Count())
+            if (inputs.Length > inputLayer.Neurons.Count)
             {
                 throw new Exception("Training Inputs exceed number of Neurons in Input Layer.");
             }
 
-            if (inputs.Count() > inputLayer.Neurons.Count())
+            if (inputs.Length > inputLayer.Neurons.Count)
             {
                 throw new Exception("Neurons in Input Layer exceed Training Inputs.");
             }
 
-            for (int n = 0, maxVal = inputs.Count(); n < maxVal; n++)
+            for (int n = 0, maxVal = inputs.Length; n < maxVal; n++)
             {
                 inputLayer.Neurons[n].Input = inputs[n];
             }
@@ -187,17 +180,17 @@ namespace SimpleAI.Models
         {
             var outputLayer = _network.Layers.Last();
 
-            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
+            if (expectedOutputs.Length > outputLayer.Neurons.Count)
             {
                 throw new Exception("Training Outputs exceed number of Neurons in Output Layer.");
             }
 
-            if (expectedOutputs.Count() > outputLayer.Neurons.Count())
+            if (expectedOutputs.Length > outputLayer.Neurons.Count)
             {
                 throw new Exception("Neurons in Output Layer exceed Training Outputs.");
             }
 
-            for (int n = 0, maxVal = expectedOutputs.Count(); n < maxVal; n++)
+            for (int n = 0, maxVal = expectedOutputs.Length; n < maxVal; n++)
             {
                 outputLayer.Neurons[n].ExpectedOut = expectedOutputs[n];
             }
@@ -235,13 +228,13 @@ namespace SimpleAI.Models
                 neuron.ExpectedOut = neuron.Children.Sum(n => n.Error * n.Parents[neuron]);
             }
             //Derivative of Sigmoid Function
-            neuron.Error = neuron.ExpectedOut.Value * (1 - neuron.Value) * neuron.Value;
+            neuron.Error = neuron.Value - neuron.ExpectedOut.Value;
 
             var newParents = new Dictionary<INeuron, double>();
-            foreach (KeyValuePair<INeuron, double> Weight in neuron.Parents)
+            foreach (var weight in neuron.Parents)
             {
-                var parent = Weight.Key;
-                newParents[parent] = Weight.Value + neuron.Error * parent.Value;
+                var parent = weight.Key;
+                newParents[parent] = weight.Value + neuron.Error * parent.Value;
             }
             neuron.Parents = newParents;
         }
@@ -284,7 +277,7 @@ namespace SimpleAI.Models
             {
                 var divisor = 1 + Math.Exp(-1 * input);
                 if (divisor == 0) return 0D;
-                var output = 1 / (divisor);
+                var output = 1 / divisor;
                 return output;
             }
             catch (Exception e)

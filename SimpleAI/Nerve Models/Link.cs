@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SimpleAI.Models;
 
-namespace SimpleAI.Models
+namespace SimpleAI.Nerve_Models
 {
     public interface ILink
     {
